@@ -213,16 +213,10 @@ def main():
 
     # Validate schema
     rfm.check_schemas({"car_info": car_info})
-
     rfm_result = rfm.rfm_analysis(car_info)
-    conditions = (
-        (rfm_result['frequency'].isin([1,2,3]))
-        & (rfm_result['recency'] == 5)
-        & (rfm_result['monetary'].isin([5]))
-    )
 
     try:
-        rfm_result[conditions].to_excel(CURRENT_DIR / "rfm_analysis_result.xlsx")
+        rfm_result.T.reset_index().T.to_excel(CURRENT_DIR / "rfm_analysis_result.xlsx", index=False, header=False)
     except PermissionError as pe:
         logging.error(f"Permission error when saving Excel file: {pe}")
         raise PermissionError(f"Permission error when saving Excel file: {pe}")
