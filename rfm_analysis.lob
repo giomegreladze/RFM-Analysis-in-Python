@@ -1,0 +1,12 @@
+Successfully getting data: database: glob, query: 
+        Select ci.vin, 
+               ut.name as dealer_name, 
+               cast(ut.created_at as date) as registration_date,
+               cast(ci.buy_date as date) as buy_date,
+               p.total_price
+        from car_info AS ci
+        left join prices AS p ON ci.id = p.car_id
+        left join users as ut ON ut.id = ci.user_id
+        where cast(ci.buy_date as date) >= '2025-06-01'
+        .. - 70 - 2025-12-15 16:31:09,269 - INFO
+car_info DataFrame passed schema validation.. - 137 - 2025-12-15 16:31:09,380 - INFO
