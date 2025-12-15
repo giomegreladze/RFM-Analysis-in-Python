@@ -9,11 +9,7 @@ This project performs RFM (Recency, Frequency, Monetary) analysis for customer s
 - `.gitignore`: Files and folders to be ignored by git.
 
 ## Usage
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Run the analysis:
+1. Run the analysis:
    ```bash
    python rfm_analysis.py
    ```
