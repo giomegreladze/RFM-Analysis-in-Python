@@ -275,7 +275,8 @@ def main():
     rfm_result = rfm.rfm_analysis(car_info)
 
     try:
-        rfm_result.reset_index().T.to_excel(CURRENT_DIR / "rfm_analysis_result.xlsx", index=False)
+        # Export to Excel without headers or index for a cleaner appearance
+        rfm_result.T.reset_index().T.to_excel(CURRENT_DIR / "rfm_analysis_result.xlsx", index=False, header=False)
     except PermissionError as pe:
         logging.error(f"Permission error when saving Excel file: {pe}")
         raise PermissionError(f"Permission error when saving Excel file: {pe}")
