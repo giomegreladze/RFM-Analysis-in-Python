@@ -45,7 +45,7 @@ class RfmAnalysis:
     """
     Performs RFM Analysis on car dealers.
 
-    The class retrives transaction data from a MySQL database useing SQLAlchemy,
+    The class retrieves transaction data from a MySQL database using SQLAlchemy,
     calculates Recency, Frequency and Monetary (RFM) metrics segments dealers
     based on these metrics, and exports the results to an Excel file.
     """
@@ -185,16 +185,10 @@ class RfmAnalysis:
             .round(0)
         )
 
-        # Calculate average purchases per day to determine frequency
-        df['avg_vin_count'] = df['vin_count'] / (pd.Timestamp.now()-df['registration_date']).dt.days.clip(lower=1)
-
         # Assign RFM scores from 1 to 5 based on quantiles, higher is better
         df['recency'] = pd.qcut((pd.Timestamp.now() - df['last_date']).dt.days, 5, labels=[5,4,3,2,1], duplicates='drop').astype(int)
-        df['frequency'] = pd.qcut(df['avg_vin_count'], 5, labels=[1,2,3,4,5], duplicates='drop').astype(int)
+        df['frequency'] = pd.qcut(df['vin_count'], 5, labels=[1,2,3,4,5], duplicates='drop').astype(int)
         df['monetary'] = pd.qcut(df['avg_value'], 5, labels=[5,4,3,2,1], duplicates='drop').astype(int)
-
-        # If dealer is newly registered set frequency to 1
-        df.loc[(pd.Timestamp.now() - df['registration_date']).dt.days <= 30, 'frequency'] = 1
 
         # Combine RFM scores into a single RFM score
         df['RFM_Score'] = df['recency'] + df['frequency'] + df['monetary']
