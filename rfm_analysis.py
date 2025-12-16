@@ -1,24 +1,15 @@
 """
-This module performs RFM (Recency, Frequency, Monetary) analysis on car dealers.
+RFM Analysis for Car Dealers
 
-Transaction and vehicle purchase data are retrieved from a MySQL database using
-SQLAlchemy. The data is cleaned, validated, and aggregated to calculate RFM
-metrics for each dealer. Based on these metrics, dealers are segmented to help
-analyze purchasing behavior and customer value.
+This script fetches car purchase and pricing data from a MySQL database,
+cleans it up, calculates RFM metrics (Recency, Frequency, Monetary) for each dealer,
+and outputs the results to an Excel file.
 
-The final RFM results are exported to an Excel file for further analysis or
-reporting.
+Logging is set up to track progress and errors in 'rfm_analysis.log'.
 
-Logging
--------
-All execution logs are written to the 'rfm_analysis.log' file.
-
-Configuration
--------------
-Database connection parameters are stored in the 'config.json' file, which
-must be present in the working directory.
+Make sure there is a 'config.json' in the working directory with the database
+connection details before running this script.
 """
-
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -45,23 +36,16 @@ logging.basicConfig(
 
 class RfmAnalysis:
     """
-    Performs RFM Analysis on car dealers.
+    Handles fetching data, cleaning it, calculating RFM metrics, and validating schemas.
 
-    Retrieves transaction data from a MySQL database, calculates Recency, Frequency,
-    and Monetary (RFM) metrics, segments dealers, and exports results to Excel.
+    You can use this class to get an overview of dealer performance and segment dealers
+    based on their purchase behavior.
     """
     def __init__(self):
-       """
-        Initializes the RfmAnalysis class by loading MySQL database connection parameters.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the 'config.json' file does not exist in the working directory.
-
-        Notes
-        -----
-        The 'config.json' file must contain valid connection parameters for the MySQL database.
+        """
+        Loads database settings from config.json.
+    
+        Will raise an error if the config file isn't found.
         """
         if Path('config.json').exists():
             with open('config.json', 'r') as f:
@@ -73,24 +57,10 @@ class RfmAnalysis:
     
     def get_data_from_database(self, query, db_name) -> pd.DataFrame:
         """
-        Executes a SQL query on the specified database and returns the result as a DataFrame.
-
-        Parameters
-        ----------
-        query : str
-            A valid SQL query string to execute on the database.
-        db_name : str
-            The key in the configuration dictionary specifying which database connection to use.
-
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame containing the query results. Returns None if a programming error occurs.
-
-        Raises
-        ------
-        KeyError
-            If the provided `db_name` does not exist in the configuration.
+        Runs a SQL query on the chosen database and returns the result as a DataFrame.
+    
+        db_name should match a key in your config.json. If the key is missing or
+        there’s a problem with the query, it logs the error and returns None.
         """
         if db_name in self.config:
             db_params = self.config[db_name]
@@ -117,25 +87,9 @@ class RfmAnalysis:
         
     def clean_car_info(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Cleans and preprocesses car information DataFrame.
-
-        Removes duplicate VIN records and converts date columns to datetime format.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Input DataFrame containing car information with columns:
-            'vin', 'buy_date', 'registration_date'.
-
-        Returns
-        -------
-        pd.DataFrame
-            Cleaned DataFrame with duplicates removed and standardized datetime columns.
-
-        Raises
-        ------
-        ValueError
-            If date conversion fails for 'buy_date' or 'registration_date'.
+        Removes duplicate VINs and makes sure date columns are proper datetime objects.
+    
+        Raises a ValueError if the dates can’t be converted.
         """
         df_cleaned = df.drop_duplicates('vin')
         try:
@@ -152,27 +106,14 @@ class RfmAnalysis:
 
     def rfm_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Performs RFM analysis on dealer transaction data.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Input DataFrame with columns:
-            'dealer_name', 'registration_date', 'buy_date', 'total_price', 'vin'.
-
-        Returns
-        -------
-        pd.DataFrame
-            Aggregated RFM metrics for each dealer:
-            'dealer_name', 'registration_date', 'vin_count', 'avg_value',
-            'last_date', 'recency', 'frequency', 'monetary', 'RFM_Score'.
-
-        Notes
-        -----
-        - Recency: days since last purchase; lower values get higher scores.
-        - Frequency: total number of purchases; higher values get higher scores.
-        - Monetary: average transaction value; higher values get higher scores.
-        - RFM scores are assigned using quintiles (pd.qcut).
+        Calculates Recency, Frequency, and Monetary metrics for each dealer.
+    
+        Returns a DataFrame sorted by overall RFM score, with columns for
+        the number of cars sold, average sale value, last sale date,
+        and individual RFM scores.
+    
+        Recency is how recently the dealer bought cars (lower is better),
+        Frequency is how many cars they bought, and Monetary is their average spend.
         """
         df = (
             df.groupby(['dealer_name', 'registration_date'], as_index=False)
@@ -204,17 +145,11 @@ class RfmAnalysis:
 
     def check_schemas(self, dataframes: Mapping[str, pd.DataFrame]) -> None:
         """
-        Validates DataFrame schemas using Pandera.
-
-        Parameters
-        ----------
-        dataframes : Mapping[str, pd.DataFrame]
-            Dictionary mapping schema names to DataFrames.
-
-        Raises
-        ------
-        pandera.errors.SchemaError
-            If any DataFrame does not conform to the predefined schema.
+        Checks that the given DataFrames match their expected schemas using Pandera.
+        
+        Pass in a dictionary where the keys are schema names and the values are
+        the DataFrames to check. If any DataFrame doesn't match its schema,
+        an error is logged and raised.
         """
         schemas = {
             'car_info': DataFrameSchema({
@@ -237,22 +172,10 @@ class RfmAnalysis:
 
 def main():
     """
-    Executes the end-to-end RFM analysis workflow and exports results to Excel.
+    Runs the full workflow: fetches data, cleans it, validates it,
+    calculates RFM scores, and saves the results to Excel.
 
-    Workflow
-    --------
-    1. Initializes the RfmAnalysis class.
-    2. Retrieves car purchase data from the MySQL database.
-    3. Cleans and preprocesses the data.
-    4. Validates DataFrame schema.
-    5. Performs RFM analysis to segment dealers.
-    6. Exports results to 'rfm_analysis_result.xlsx'.
-
-    Raises
-    ------
-    PermissionError
-        If the Excel file cannot be written due to file access issues.
-    Any exceptions raised by RfmAnalysis methods (e.g., database errors, schema validation errors).
+    Make sure no other program is using the Excel file, or it will fail.
     """
     rfm = RfmAnalysis()
     car_info = rfm.get_data_from_database(
