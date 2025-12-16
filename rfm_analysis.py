@@ -71,13 +71,25 @@ class RfmAnalysis:
     
     def get_data_from_database(self, query, db_name) -> pd.DataFrame:
         """
-        Gets data from the specified database using the provided SQL query.
-        
-        :param self: Description
-        :param query: Description
-        :param db_name: Description
-
-        return: pd.DataFrame
+        Executes a SQL query on the specified database and returns the result as a pandas DataFrame.
+    
+        This method retrieves data from a MySQL database using SQLAlchemy. It reads the 
+        database connection parameters from the loaded configuration (`config.json`) and 
+        executes the provided SQL query. Execution details are logged.
+    
+        Parameters:
+        query: 
+            str: A valid SQL query string to execute on the database.
+        db_name: 
+            str: The key in the configuration dictionary that specifies which database 
+            connection parameters to use.
+    
+        Returns:
+            pd.DataFrame: A pandas DataFrame containing the query results. Returns None if a 
+            programming error occurs during query execution.
+    
+        Raises:
+            KeyError: If the provided `db_name` does not exist in the configuration.
         """
         if db_name in self.config:
             db_params = self.config[db_name]
@@ -144,7 +156,7 @@ class RfmAnalysis:
         DataFrame to segment dealers based on their purchasing behavior.
 
         Parameters
-        df : pd.DataFrame
+        df: pd.DataFrame
             Input DataFrame containing the following columns:
                 - 'dealer_name': Identifier for each dealer.
                 - 'registration_date': Date when the dealer registered (datetime).
