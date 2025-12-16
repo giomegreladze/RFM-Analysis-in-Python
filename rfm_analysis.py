@@ -186,9 +186,10 @@ class RfmAnalysis:
         )
 
         # Assign RFM scores from 1 to 5 based on quantiles, higher is better
+        # Recency score: fewer days since last purchase -> higher score
         df['recency'] = pd.qcut((pd.Timestamp.now() - df['last_date']).dt.days, 5, labels=[5,4,3,2,1], duplicates='drop').astype(int)
         df['frequency'] = pd.qcut(df['vin_count'], 5, labels=[1,2,3,4,5], duplicates='drop').astype(int)
-        df['monetary'] = pd.qcut(df['avg_value'], 5, labels=[5,4,3,2,1], duplicates='drop').astype(int)
+        df['monetary'] = pd.qcut(df['avg_value'], 5, labels=[1,2,3,4,5], duplicates='drop').astype(int)
 
         # Combine RFM scores into a single RFM score
         df['RFM_Score'] = df['recency'] + df['frequency'] + df['monetary']
